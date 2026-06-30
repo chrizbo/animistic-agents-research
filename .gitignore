@@ -1,0 +1,27 @@
+# Secrets — never commit the real .env
+.env
+
+# tau3-bench submodule / clone
+tau2-bench/
+
+# Results and analysis output (large JSON files)
+results/*.json
+results/*.jsonl
+analysis/*.png
+analysis/*.pdf
+analysis/*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.uv/
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+*.swp
