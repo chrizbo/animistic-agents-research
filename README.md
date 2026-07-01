@@ -139,6 +139,12 @@ open analysis/pass_at_1_retail.png
 
 Produces bar charts (PNG + PDF) comparing pass@1 and DB reward across conditions and models, plus a `summary.csv`.
 
+## Preliminary Results
+
+Early k=1 results across four conditions on the retail domain (GPT-4o) are available in [results-preliminary/preliminary-results.md](results-preliminary/preliminary-results.md).
+
+Short version: all conditions cluster within 3 percentage points on pass@1 (53–56%), with meaningful differences in *which* tasks fail. The pass^k consistency metric — the primary theoretical differentiator — has not yet been run.
+
 ## Status
 
 - [x] Prompts written for retail and airline (conditions A, B, C)
