@@ -99,7 +99,7 @@ animistic-agents-research/
 git clone https://github.com/chrizbo/animistic-agents-research
 cd animistic-agents-research
 git clone https://github.com/sierra-research/tau2-bench
-cd tau2-bench && uv sync && cd ..
+cd tau2-bench && git checkout v1.0.1 && uv sync && cd ..   # pinned: <1.0.1 results aren't comparable
 
 # 2. Configure API keys
 cp .env.example .env
@@ -123,7 +123,9 @@ cp .env.example .env
 # Options
 #   --condition   a | b | c | cv2
 #   --domain      retail | airline
-#   --model       gpt-4o | claude-sonnet-4-5
+#   --model       any LiteLLM model string (gpt-4o, claude-sonnet-5-5, openai/<local-name>)
+#   --agent-api-base  OpenAI-compatible endpoint for the agent only (e.g. local llama-server)
+#   --user-api-base   same, for the user simulator only
 #   --user-model  model for the simulated user (default: gpt-4o)
 #   --trials      number of trials per task (default: 1; use 5 for final runs)
 #   --num-tasks   run a subset of tasks (e.g. 20 for a cheap pilot)

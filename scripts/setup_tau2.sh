@@ -32,6 +32,17 @@ if [ ! -d "$TAU2_DIR" ]; then
 fi
 echo "✓ tau2-bench found at $TAU2_DIR"
 
+# Results from tau2-bench < 1.0.1 are not comparable with >= 1.0.1 (75+ task fixes),
+# so every run in this study must use the pinned tag.
+TAU2_TAG="v1.0.1"
+if ! git -C "$TAU2_DIR" describe --tags --exact-match 2>/dev/null | grep -qx "$TAU2_TAG"; then
+    echo ""
+    echo "tau2-bench is not checked out at $TAU2_TAG. Pin it with:"
+    echo "  git -C $TAU2_DIR fetch --tags && git -C $TAU2_DIR checkout $TAU2_TAG"
+    exit 1
+fi
+echo "✓ tau2-bench pinned at $TAU2_TAG"
+
 # 2. Copy custom agent into tau2-bench
 AGENT_DEST="$TAU2_DIR/src/tau2/agent/animistic_agent.py"
 cp "$SCRIPT_DIR/agent.py" "$AGENT_DEST"

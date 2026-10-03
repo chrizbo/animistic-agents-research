@@ -7,12 +7,24 @@
 # Required options:
 #   --condition   a | b | c           Prompt condition to evaluate
 #   --domain      retail | airline    Domain to run
-#   --model       gpt-4o | claude-sonnet-4-5   Agent model
+#   --model       Agent model, as a LiteLLM model string (gpt-4o, claude-sonnet-5-5,
+#                 openrouter/deepseek/deepseek-v4-flash, openai/<name> for a local server)
 #
 # Optional:
 #   --trials      Number of trials per task (default: 1)
 #   --test        Run only 1 task (pipeline validation mode, no meaningful metrics)
 #   --concurrency Max concurrent simulations (default: 5)
+#   --agent-api-base  OpenAI-compatible endpoint for the agent only, e.g. a local
+#                     llama-server at http://localhost:8080/v1
+#   --user-api-base   Same, for the user simulator only
+#   --agent-provider  Pin an openrouter/ agent model to one host (e.g. StreamLake), no fallbacks
+#   --user-provider   Same, for the user simulator
+#   --agent-thinking  on | off — fix the agent's thinking mode (default: model default)
+#   --user-thinking   on | off — same, for the user simulator
+#
+#   # Local agent (llama-server) with a hosted user simulator
+#   ./scripts/run_eval.sh --condition a --domain retail --model openai/qwen3.5-9b \
+#       --agent-api-base http://localhost:8080/v1 --concurrency 1 --num-tasks 20
 #
 # Examples:
 #   # Test mode — validate pipeline with one task
@@ -43,7 +55,13 @@ TRIALS=1
 TEST_MODE=false
 CONCURRENCY=5
 NUM_TASKS=""
-USER_MODEL="gpt-4o"
+USER_MODEL="${USER_MODEL:-gpt-4o}"   # .env may set the study-wide user simulator
+AGENT_API_BASE=""
+USER_API_BASE=""
+AGENT_PROVIDER=""
+USER_PROVIDER="${USER_PROVIDER:-}"
+AGENT_THINKING=""
+USER_THINKING="${USER_THINKING:-}"
 
 # ── Parse arguments ───────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -56,6 +74,12 @@ while [[ $# -gt 0 ]]; do
         --num-tasks)   NUM_TASKS="$2";  shift 2 ;;
         --test)        TEST_MODE=true;  shift ;;
         --concurrency) CONCURRENCY="$2"; shift 2 ;;
+        --agent-api-base) AGENT_API_BASE="$2"; shift 2 ;;
+        --user-api-base)  USER_API_BASE="$2";  shift 2 ;;
+        --agent-provider) AGENT_PROVIDER="$2"; shift 2 ;;
+        --user-provider)  USER_PROVIDER="$2";  shift 2 ;;
+        --agent-thinking) AGENT_THINKING="$2"; shift 2 ;;
+        --user-thinking)  USER_THINKING="$2";  shift 2 ;;
         *) echo "Unknown argument: $1"; exit 1 ;;
     esac
 done
@@ -89,18 +113,47 @@ elif [ -n "$NUM_TASKS" ]; then
     NUM_TASKS_ARG="--num-tasks $NUM_TASKS"
 fi
 
-# Map model names to provider for user LLM
-case "$MODEL" in
-    gpt-4o*)       PROVIDER="openai" ;;
-    claude-*)      PROVIDER="anthropic" ;;
-    *)             PROVIDER="openai" ;;
-esac
+# LLM args per side. An api_base routes only that side to a custom endpoint, so a
+# local agent never redirects the hosted user simulator (as OPENAI_API_BASE would).
+# Temperature 0 matches tau2's default, which passing llm-args would otherwise replace.
+# A provider pins an OpenRouter model to one host with fallbacks off: hosts serve the
+# same open model at different quantizations, so silent rerouting would add noise.
+# Thinking (on|off) is fixed per run so conditions never differ in it; empty keeps the
+# model's default. OpenRouter takes a unified reasoning switch, llama-server the template's.
+llm_args() {
+    python3 - "$1" "$2" "$3" <<'PY'
+import json, sys
+api_base, provider, thinking = sys.argv[1:4]
+args, extra = {"temperature": 0.0}, {}
+if api_base:
+    args.update(api_base=api_base, api_key="local")
+if provider:
+    extra["provider"] = {"order": [provider], "allow_fallbacks": False}
+if thinking:
+    on = thinking == "on"
+    if api_base:
+        extra["chat_template_kwargs"] = {"enable_thinking": on}
+    else:
+        extra["reasoning"] = {"enabled": on}
+if extra:
+    args["extra_body"] = extra
+print(json.dumps(args))
+PY
+}
+for t in "$AGENT_THINKING" "$USER_THINKING"; do
+    case "$t" in ""|on|off) ;; *) echo "Thinking must be on or off, got: $t"; exit 1 ;; esac
+done
+AGENT_LLM_ARGS=$(llm_args "$AGENT_API_BASE" "$AGENT_PROVIDER" "$AGENT_THINKING")
+USER_LLM_ARGS=$(llm_args "$USER_API_BASE" "$USER_PROVIDER" "$USER_THINKING")
 
-# Build a descriptive run name for result traceability
+# Build a descriptive run name for result traceability. Model strings may contain
+# provider prefixes with slashes (openrouter/..., openai/...), so flatten them.
+safe_name() { local s="${1//\//_}"; s="${s//-/_}"; echo "${s//./_}"; }
 DATE=$(date +%Y-%m-%d_%H%M)
 K_LABEL="k${TRIALS}"
 if [ "$TEST_MODE" = true ]; then K_LABEL="k1"; fi
-RUN_NAME="${DOMAIN}_cond${CONDITION}_${MODEL//-/_}_u_${USER_MODEL//-/_}_${K_LABEL}_${DATE}"
+AGENT_TAG="$(safe_name "$MODEL")${AGENT_THINKING:+_think_$AGENT_THINKING}"
+RUN_NAME="${DOMAIN}_cond${CONDITION}_${AGENT_TAG}_u_$(safe_name "$USER_MODEL")_${K_LABEL}_${DATE}"
 
 echo "=== Animistic agents: tau2-bench evaluation ==="
 echo "  Condition:   $CONDITION"
@@ -119,7 +172,9 @@ uv run tau2 run \
     --domain "$DOMAIN" \
     --agent animistic_agent \
     --agent-llm "$MODEL" \
+    --agent-llm-args "$AGENT_LLM_ARGS" \
     --user-llm "$USER_MODEL" \
+    --user-llm-args "$USER_LLM_ARGS" \
     --num-trials "$TRIALS" \
     --max-concurrency "$CONCURRENCY" \
     --seed 300 \
