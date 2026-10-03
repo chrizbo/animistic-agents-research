@@ -53,6 +53,7 @@ except ImportError:
 FILENAME_RE = re.compile(
     r"(?P<domain>retail|airline)"
     r"_cond(?P<condition>cv2|[abc])"
+    r"(?P<policy>_pol)?"  # framing experiment: verbatim policy appended
     r"_(?P<model>[^_]+(?:_[^_]+)*?)(?:_u_(?P<user_model>[^_]+(?:_[^_]+)*?))?(?=_k)"  # agent model + optional _u_ user model
     r"_k(?P<trials>\d+)"
     r"_(?P<date>\d{4}-\d{2}-\d{2})"
@@ -69,6 +70,9 @@ def parse_filename(path: Path) -> dict | None:
         return None
     d = m.groupdict()
     d["model"] = d["model"].replace("_", "-")  # restore hyphens
+    # Keep the two experiments apart in every chart and table
+    if d.pop("policy"):
+        d["model"] += " +policy"
     d["trials"] = int(d["trials"])
     d["condition"] = d["condition"].upper() if d["condition"] != "cv2" else "CV2"
     return d
@@ -111,6 +115,14 @@ def load_results(path: Path) -> list[dict]:
             f"Unexpected results format in {path}. "
             "Run with --inspect to see the raw structure."
         )
+
+    # Rate limits and provider outages say nothing about the prompt; tau2 excludes
+    # these from its own metrics, and `run_eval.sh --resume` reruns them.
+    infra = [s for s in sims if s.get("termination_reason") == "infrastructure_error"]
+    if infra:
+        print(f"  ⚠ {path.name}: excluding {len(infra)} infrastructure-error sims "
+              f"(rerun with run_eval.sh --resume)")
+        sims = [s for s in sims if s.get("termination_reason") != "infrastructure_error"]
     return sims
 
 

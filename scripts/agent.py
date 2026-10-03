@@ -12,6 +12,12 @@ Why override the wrapper?
     with exactly the text in their respective prompt files — nothing added,
     nothing removed.
 
+    With ANIMISTIC_INCLUDE_POLICY=1 the verbatim tau2 domain policy is appended
+    in a <policy> block after the prompt file. Every condition then carries the
+    same rules and differs only in framing (the "framing" experiment); without
+    it, each prompt file must carry its own paraphrase of the rules (the
+    "spec authoring" experiment).
+
 Usage (after setup_tau2.sh has been run):
     ANIMISTIC_SYSTEM_PROMPT_FILE=../prompts/retail/condition-c-animistic.md \
     tau2 run --domain retail --agent animistic_agent --agent-llm gpt-4o ...
@@ -56,10 +62,16 @@ class CustomPromptLLMAgent(LLMAgent):
         if not path.exists():
             raise FileNotFoundError(f"System prompt file not found: {path}")
         self._custom_system_prompt = path.read_text().strip()
+        self._include_policy = os.environ.get("ANIMISTIC_INCLUDE_POLICY") == "1"
 
     @property
     def system_prompt(self) -> str:
-        """Return the raw file contents as the sole system prompt."""
+        """Return the file contents, plus the verbatim domain policy if enabled."""
+        if self._include_policy:
+            return (
+                f"{self._custom_system_prompt}\n\n"
+                f"<policy>\n{self.domain_policy}\n</policy>"
+            )
         return self._custom_system_prompt
 
 

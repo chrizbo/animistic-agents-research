@@ -19,6 +19,10 @@
 #   --user-api-base   Same, for the user simulator only
 #   --agent-provider  Pin an openrouter/ agent model to one host (e.g. StreamLake), no fallbacks
 #   --user-provider   Same, for the user simulator
+#   --with-policy     Use prompts/<domain>/with-policy/ (framing only) and append the
+#                     verbatim tau2 policy to every condition
+#   --resume RUN_NAME Rerun only the infrastructure-error sims of an earlier run (pass
+#                     the same condition/model/user flags as the original run)
 #   --agent-thinking  on | off — fix the agent's thinking mode (default: model default)
 #   --user-thinking   on | off — same, for the user simulator
 #
@@ -53,6 +57,8 @@ DOMAIN=""
 MODEL=""
 TRIALS=1
 TEST_MODE=false
+WITH_POLICY=false
+RESUME=""
 CONCURRENCY=5
 NUM_TASKS=""
 USER_MODEL="${USER_MODEL:-gpt-4o}"   # .env may set the study-wide user simulator
@@ -73,6 +79,8 @@ while [[ $# -gt 0 ]]; do
         --trials)      TRIALS="$2";     shift 2 ;;
         --num-tasks)   NUM_TASKS="$2";  shift 2 ;;
         --test)        TEST_MODE=true;  shift ;;
+        --with-policy) WITH_POLICY=true; shift ;;
+        --resume)      RESUME="$2"; shift 2 ;;
         --concurrency) CONCURRENCY="$2"; shift 2 ;;
         --agent-api-base) AGENT_API_BASE="$2"; shift 2 ;;
         --user-api-base)  USER_API_BASE="$2";  shift 2 ;;
@@ -98,6 +106,11 @@ case "$CONDITION" in
     cv2) PROMPT_FILE="$RESEARCH_DIR/prompts/$DOMAIN/condition-c-animistic.md" ;;
     *) echo "Unknown condition: $CONDITION (must be a, b, c, or cv2)"; exit 1 ;;
 esac
+
+# Framing experiment: framing-only prompts, with the verbatim policy appended by agent.py
+if [ "$WITH_POLICY" = true ]; then
+    PROMPT_FILE="$RESEARCH_DIR/prompts/$DOMAIN/with-policy/condition-$CONDITION.md"
+fi
 
 if [ ! -f "$PROMPT_FILE" ]; then
     echo "Prompt file not found: $PROMPT_FILE"
@@ -153,7 +166,15 @@ DATE=$(date +%Y-%m-%d_%H%M)
 K_LABEL="k${TRIALS}"
 if [ "$TEST_MODE" = true ]; then K_LABEL="k1"; fi
 AGENT_TAG="$(safe_name "$MODEL")${AGENT_THINKING:+_think_$AGENT_THINKING}"
-RUN_NAME="${DOMAIN}_cond${CONDITION}_${AGENT_TAG}_u_$(safe_name "$USER_MODEL")_${K_LABEL}_${DATE}"
+POLICY_TAG=""
+if [ "$WITH_POLICY" = true ]; then POLICY_TAG="_pol"; fi
+RUN_NAME="${DOMAIN}_cond${CONDITION}${POLICY_TAG}_${AGENT_TAG}_u_$(safe_name "$USER_MODEL")_${K_LABEL}_${DATE}"
+# Resuming reuses the run's directory; tau2 then reruns only infrastructure-error sims
+RESUME_ARG=""
+if [ -n "$RESUME" ]; then
+    RUN_NAME="$RESUME"
+    RESUME_ARG="--auto-resume"
+fi
 
 echo "=== Animistic agents: tau2-bench evaluation ==="
 echo "  Condition:   $CONDITION"
@@ -168,6 +189,7 @@ echo ""
 cd "$TAU2_DIR"
 
 ANIMISTIC_SYSTEM_PROMPT_FILE="$PROMPT_FILE" \
+ANIMISTIC_INCLUDE_POLICY=$([ "$WITH_POLICY" = true ] && echo 1 || echo 0) \
 uv run tau2 run \
     --domain "$DOMAIN" \
     --agent animistic_agent \
@@ -179,6 +201,7 @@ uv run tau2 run \
     --max-concurrency "$CONCURRENCY" \
     --seed 300 \
     --save-to "$RUN_NAME" \
+    $RESUME_ARG \
     $NUM_TASKS_ARG
 
 # ── Copy results to research repo ─────────────────────────────────────────────
