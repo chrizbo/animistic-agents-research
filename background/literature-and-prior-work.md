@@ -50,11 +50,11 @@ One more distinction worth keeping. Dennett noted a possible fourth stance above
 
 ## 3. What existing evidence says about personas and trust
 
-**Personas in system prompts.** Zheng, Pei, Logeswaran, Lee, and Jurgens tested personas across four model families and 2,410 factual questions and found that adding a persona did not improve performance over no persona, with the effect of any given persona close to random. An earlier version of the same paper had reported that interpersonal roles consistently helped. Two lessons. A null result on raw task completion between framings is the expected baseline, and it matches this repo's preliminary pass@1 numbers. And results in this area have reversed between drafts of a single paper, so small differences deserve suspicion.
+The fuller account, including the study of managers reviewing work from an "AI employee," is in [agents-as-employees-and-state-of-the-art.md](agents-as-employees-and-state-of-the-art.md). In short:
 
-**Anthropomorphism and trust.** Kadambi and colleagues (2026) varied warmth, competence, and empathy across more than 2,000 interactions with 115 participants. Warmth drove perceived human-likeness. Trust was driven mainly by competence, with a smaller warmth effect. A longitudinal survey from the Stanford Social Media Lab and BetterUp, as reported by Fortune in 2025, found perceptions of AI warmth, human-likeness, and trust rising over a year while perceived competence fell, alongside a 34 percent rise in anthropomorphic metaphors for AI.
-
-**What this does and does not support.** The claim that personified agents shift trust from competence to affect has partial support and is not settled. The lab study says competence still dominates trust. The survey says trust can rise while perceived competence falls. Neither measures the thing this project cares about most, which is scrutiny: whether people check a named colleague's work less than a kiosk's. That is an open question and a candidate for a second study.
+- **Personas in system prompts.** Zheng and colleagues found that adding a persona did not improve performance on factual questions, with the effect of any given persona close to random. An earlier version of the same paper had reported the opposite. A null result on raw task completion between framings is the expected baseline, and it matches this repo's preliminary pass@1 numbers.
+- **Anthropomorphism and trust.** Kadambi and colleagues found that warmth drives perceived human-likeness while trust is driven mainly by competence. A longitudinal survey reported by Fortune found trust rising while perceived competence fell.
+- **Scrutiny.** Wiles and colleagues ran a randomized experiment with 1,261 managers. In organizations that already put AI on the org chart, work labeled as coming from an AI employee got less oversight than the same work labeled as coming from an AI tool. This is the strongest evidence for the claim that role framing lowers human scrutiny. It compares employee with tool. It does not test an artifact framing.
 
 ## 4. Prior work this project grew out of
 
@@ -75,7 +75,7 @@ One more distinction worth keeping. Dennett noted a possible fourth stance above
 1. **Uncertainty or consistency?** The source tradition prizes unpredictability. The hypothesis here is consistency. See the tension noted in section 1.
 2. **Is the mood grid anthropomorphism by the back door?** A kiosk that is "afraid" before a one-shot operation is a useful trigger. It is also an emotion. Preliminary results suggest the mood triggers did not help and may have caused over-confirmation.
 3. **Does the benchmark test the claim?** The study uses a customer service benchmark. The organizational claim is about roadmaps, releases, and decision records. Those are different settings and the gap should be named.
-4. **Does framing change human scrutiny?** Untested. This may matter more than task performance.
+4. **Does an artifact framing change human scrutiny?** Employee framing lowers oversight compared with tool framing in at least one randomized study. Where a bounded artifact falls between those two is untested. This may matter more than task performance.
 5. **What happens when artifacts negotiate with each other?** The roleplay sessions simulate this with people. Nothing in this repo tests it with agents yet.
 6. **Borrowed language.** Animism is a living practice for many people. Credit the sources and avoid treating it as a gimmick.
 
@@ -107,9 +107,9 @@ Actor-network theory and neighbors
 
 Personas and trust
 
-- Zheng, M., Pei, J., Logeswaran, L., Lee, M., Jurgens, D. (2024). When "A Helpful Assistant" Is Not Really Helpful: Personas in System Prompts Do Not Improve Performances of Large Language Models. Findings of EMNLP. https://arxiv.org/abs/2311.10054
+- See [agents-as-employees-and-state-of-the-art.md](agents-as-employees-and-state-of-the-art.md) for the full list.
+- Zheng, M., Pei, J., Logeswaran, L., Lee, M., Jurgens, D. (2024). When "A Helpful Assistant" Is Not Really Helpful. Findings of EMNLP. https://arxiv.org/abs/2311.10054
 - Kadambi, A. et al. (2026). Anthropomorphism and Trust in Human-Large Language Model Interactions. https://arxiv.org/abs/2604.15316
-- Fortune (February 13, 2025), reporting on a Stanford Social Media Lab and BetterUp study. https://fortune.com/2025/02/13/chatbot-friends-anthromorphism-competence-stanford-unviversity-study
 
 Prior work
 

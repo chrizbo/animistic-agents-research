@@ -4,7 +4,8 @@ Reading notes and context that sit behind the empirical study in this repo. Noth
 
 | File | What it covers |
 | --- | --- |
-| [literature-and-prior-work.md](literature-and-prior-work.md) | Animistic design literature, actor-network theory and its neighbors, existing evidence on personas and trust, and the earlier work this project grew out of |
+| [literature-and-prior-work.md](literature-and-prior-work.md) | Animistic design literature, actor-network theory and its neighbors, and the earlier work this project grew out of |
+| [agents-as-employees-and-state-of-the-art.md](agents-as-employees-and-state-of-the-art.md) | The push to put agents on the org chart, the evidence on what that does to human oversight, and what agents can and cannot do today |
 | [contextual-integrity-and-intermediaries.md](contextual-integrity-and-intermediaries.md) | Contextual integrity as a way to specify what an artifact agent may hold and pass on, and what changes when an agent sits between people |
 
 Corrections and additions are welcome. If a source is missing or misread, open an issue or a pull request.
