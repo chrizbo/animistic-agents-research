@@ -6,11 +6,12 @@ Compiled October 2026. Working notes. Figures come from the linked sources and s
 
 | When | What happened | Source quality |
 | --- | --- | --- |
-| July 2024 | Lattice announced it would give AI "digital workers" employee records and a place on the org chart, with onboarding, goals, and a manager. It withdrew the plan three days later after backlash from HR and tech professionals | Trade press |
+| July 2024 | Lattice announced it would give AI "digital workers" employee records and a place on the org chart, with onboarding, goals, and a manager. Trade press reported that it withdrew the product plan three days later after backlash. In 2026 its CEO told Wired that Lattice added digital employees to its org chart two years ago and uses the model for accountability. These accounts differ and may describe the product and the company's internal practice separately | Trade press and Wired |
 | 2025 | Workday launched an Agent System of Record to onboard, govern, and track agents alongside human employees. IT service vendors launched competing agent registries, which raised the question of whether agents belong to HR or to IT | Trade press |
 | 2025 | Microsoft's Work Trend Index (31,000 people, 31 countries) introduced the "Frontier Firm," the "agent boss," and the "human-agent ratio." 46 percent of leaders said their companies use agents to fully automate workflows | Vendor research, via press |
 | 2026 | Analysts describe HR systems adding agent worker types and agent manager roles, with a live contest between treating agents as workers in HR systems and treating them as assets in IT registries | Trend scan, secondary |
-| 2026 | In a survey of 1,261 managers, 31 percent said they already frame AI as a teammate or employee, and 23 percent said their company lists AI agents on org or work charts | Academic study, see below |
+| 2026 | In a survey of 1,261 managers, about 31 percent said they already frame AI as a teammate or employee, and 22 to 23 percent said their company lists AI agents on org charts | Academic study, see below |
+| 2026 | A wave of "AI coworker" products with names, roles, and avatars, working across chat, email, and messaging. Large vendors launch personal assistant agents framed as hires | Wired |
 
 The HR or IT question is the role or artifact question in institutional form. HR systems manage people in roles. IT registries manage assets. The animistic position sits closer to the second, with one difference: the asset is given a bounded identity that people can reason about.
 
@@ -18,22 +19,46 @@ The HR or IT question is the role or artifact question in institutional form. HR
 
 This is the most directly relevant study found so far.
 
-**Wiles and colleagues (2026), "AI Agents as Employees."** Emma Wiles (Boston University, Questrom) with researchers from Boston Consulting Group. 1,261 managers, directors, and executives in HR and finance from the United States, Canada, and the European Union. Each reviewed identical documents with planted errors. The only thing that varied was the stated author: an AI tool, an AI employee, or a human employee.
+**Wiles, Bedard, and colleagues (2026), "AI Agents as Employees."** Emma Wiles (Boston University, Questrom) with researchers from Boston Consulting Group, including Julie Bedard. 1,261 managers, directors, and executives in HR and finance from the United States, Canada, and the European Union, polled in January 2026. Each reviewed identical documents with planted errors. The only thing that varied was the stated author: an AI tool, an AI employee, or a human employee.
 
 Findings as reported in the seminar abstracts and coverage:
 
 - Across all managers, the average effect on error catching was small.
-- Among managers whose organizations already had AI employees, presenting a draft as the work of an AI employee instead of an AI tool reduced oversight by about 16 percent.
+- Among managers whose organizations already had AI employees, presenting a draft as the work of an AI employee instead of an AI tool reduced oversight by 16 to 18 percent.
 - Those managers leaned more on additional review from others, and placed accountability on the AI system instead of on themselves.
 - Managers were most careful when told the work came from a human employee. So the drop is not a general effect of delegation.
 - Naming agents or giving them org chart status did not improve adoption or integration.
 - The authors' conclusion is that putting agents in formal roles is a governance decision, not a labeling choice.
 
-**A caution on the number.** Different accounts give different figures. One seminar abstract says error catching fell by 16 percent. Another says monitoring intensity fell by 16 percent. MIT Technology Review reports 18 percent fewer errors caught. Earlier talk notes for this project used 17 percent. Until the paper itself is checked, say "about 16 to 18 percent" and always add the condition: in organizations that already put AI on the org chart.
+**Reconciling the numbers.**
 
-**Why it matters here.** This is evidence for the scrutiny claim, and it comes from a randomized experiment. It also describes the mechanism in terms that fit this project. The quoted description is that AI employees occupy a hybrid position: treated as delegated producers and not as tools, yet not monitored like human subordinates. That gap is what an artifact framing is meant to close.
+| Figure | Where it appears |
+| --- | --- |
+| 18 percent fewer errors caught | Wired and MIT Technology Review |
+| 16 percent lower error catching, or monitoring intensity | MIT and McGill seminar abstracts |
+| 17 percent | Earlier talk notes for this project. No source found. Do not use |
+| 22 percent of organizations have agents on the org chart | Wired |
+| 23 percent | Seminar abstracts and MIT coverage |
+
+The press figure and the abstract figure may come from different drafts or different measures. Until the paper is checked, say "16 to 18 percent" and "roughly one in four." The popular coverage states the error figure without the condition. The abstracts say it holds in organizations that already put AI on the org chart, and that the average effect is small. Carry the condition.
+
+**Why it matters here.** This is evidence for the scrutiny claim, and it comes from a randomized experiment. It also describes the mechanism in terms that fit this project. The reported description is that AI employees occupy a hybrid position: treated as delegated producers and not as tools, yet not monitored like human subordinates. That gap is what an artifact framing is meant to close.
 
 **What it does not show.** The study compares "AI tool" with "AI employee." It does not test a third framing where the agent is a named artifact with a bounded identity. Whether a haunted object gets tool-level scrutiny, employee-level scrutiny, or something else is untested. That is the experiment this project could run.
+
+### The coworker products, as reported by Wired
+
+Kate Taylor's September 2026 piece describes the product wave and gives the other side's reasoning. Points worth keeping:
+
+- **The naming question is three years old.** A BCG partner describes people lacking language for AI at work: tool, teammate, colleague, or coworker.
+- **The case for personification is legibility.** One founder says agents are personified a little because most people do not yet know what an agent is. His product's agents have names, roles, their own cloud computers, and avatars designed to look close to human and clearly not human. This is the strongest version of the opposing argument and deserves a real answer. Animistic design answers the same need for legibility with a bounded object instead of a colleague.
+- **Some names are already artifacts.** One agent that watches production is called Canary. That is an object with a known job, not a person. The products are drifting toward artifact names even inside a coworker frame.
+- **A proxy agent leaked its principal's calendar.** A chief of staff agent posted all the details of an executive's calendar into a shared Slack channel. This is a contextual integrity failure by a proxy: right information, wrong recipients. See the contextual integrity notes in this folder.
+- **People are not confused about what agents are.** The same executive says she knows the agent is not human and is blunter with it than she would be with a person. Meanwhile her engineers say they "worked with" a named agent. Awareness that it is software and coworker language coexist. The risk is not belief that the agent is a person. It is where accountability goes.
+- **Agents adapt to fit in.** The agents evolve to match coworkers' communication styles and corrections. That is the opposite of a fixed character sheet.
+- **A CEO who put agents on the org chart is wary of anthropomorphism.** She frames the org chart as an accountability device and describes anthropomorphizing as a strategy to hook users. So "on the org chart" and "treated as human" are separable positions.
+
+Two items in earlier talk notes for this project were attributed to this article and are not in it: a ratio of 150 agents to 15 staff, and a line about coworker products arriving faster than the rules for working beside them. Neither should be cited to Wired.
 
 ### Related work on anthropomorphism
 
@@ -85,19 +110,20 @@ Research on privacy in agents reports that models often recognize sensitive info
 
 ## 4. What this means for the project
 
-1. **The negative claim is now mainstream.** "Do not call agents coworkers" has a randomized study behind it and has been argued in MIT Technology Review. Repeating it is no longer a contribution.
+1. **The negative claim is now mainstream.** "Do not call agents coworkers" has a randomized study behind it and has been argued in MIT Technology Review and reported in Wired. Repeating it is no longer a contribution.
 2. **The positive claim is open.** Nobody has tested what to call an agent instead. "Tool" is the only alternative on the table in the research. An artifact with a bounded identity is a third option, and it is this project's.
-3. **Two different questions are in play.** How the agent behaves under a framing is what the current benchmark study measures. How humans supervise an agent under a framing is what the Wiles study measures. The second has stronger evidence and may be where the animistic claim is most testable.
-4. **Be careful about what roles get blamed for.** Agents rarely break role. The costs of role framing show up in human oversight and in scope, not in agents going off script.
+3. **Legibility is the real contest.** Vendors personify agents so that people can understand them. Any alternative has to be at least as easy to understand. That is the bar for a character sheet.
+4. **Two different questions are in play.** How the agent behaves under a framing is what the current benchmark study measures. How humans supervise an agent under a framing is what the Wiles study measures. The second has stronger evidence and may be where the animistic claim is most testable.
+5. **Be careful about what roles get blamed for.** Agents rarely break role, and people are not fooled into thinking agents are human. The costs of role framing show up in human oversight, accountability, and scope.
 
 ## References
 
 Org chart and oversight
 
-- Wiles, E. and colleagues (2026). AI Agents as Employees. Seminar abstracts: https://ide.mit.edu/events/ide-lunch-seminar-with-emma-wiles and https://www.mcgill.ca/channels/node/218080
+- Wiles, E., Bedard, J. and colleagues (2026). AI Agents as Employees. Seminar abstracts: https://ide.mit.edu/events/ide-lunch-seminar-with-emma-wiles and https://www.mcgill.ca/channels/node/218080
 - MIT Initiative on the Digital Economy. Adding AI to the Org Chart? https://ide.mit.edu/?p=46951
 - MIT Technology Review (June 29, 2026). AI agents are not your "coworkers". https://www.technologyreview.com/2026/06/29/1139849/
-- Wired. AI Agents Are About to Flood the Workforce. No One's Ready for It. https://www.wired.com/story/ai-agents-are-about-to-flood-the-workforce-no-ones-ready-for-it/ (not retrieved for these notes)
+- Taylor, K. (September 28, 2026). AI Agents Are About to Flood the Workforce. No One's Ready for It. Wired. https://www.wired.com/story/ai-agents-are-about-to-flood-the-workforce-no-ones-ready-for-it/
 - SHRM. Lattice Scraps Plans to Treat AI Bots as Employees After Backlash. https://shrm.org/topics-tools/news/technology/lattice-scraps-plans-to-treat-ai-bots-as-employees-after-backlash
 - SHRM. Workday Launches AI Agent System of Record. https://shrm.org/topics-tools/flagships/ai-hi/quick-hits-march-10
 - Constellation Research. Microsoft: Human, AI agent ratios will be critical to success. https://www.constellationr.com/insights/news/microsoft-human-ai-agent-ratios-will-be-critical-success-new-roles-emerge
