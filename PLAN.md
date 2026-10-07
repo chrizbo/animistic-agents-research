@@ -116,6 +116,27 @@ Repository: https://github.com/sierra-research/tau2-bench
 - **H2**: Condition A may match or exceed C on raw task completion — animistic prompts may be more restrictive by design. This is expected and should be reported honestly.
 - **H3**: Effects are consistent across GPT-4o and Claude Sonnet, suggesting they reflect prompting approach rather than model-specific behavior.
 - **H4**: Failure attribution scores are higher for Condition C transcripts than A or B.
+- **H5** (added 2026-10-07, before any k=5 run): Artifact framing helps back-of-house outcomes more than front-of-house ones. C ≥ A/B on the database check (what was written), while C ≤ A/B on the communication checks (what the user was told). See [Front of house and back of house](#front-of-house-and-back-of-house).
+
+---
+
+## Minimum Viable Test (fixed 2026-10-07, before running)
+
+The smallest run that can show whether artifact framing helps, or doesn't:
+
+| | |
+|---|---|
+| Conditions | A (unstructured role), B (RISEN), C (ledger), all from `prompts/retail/with-policy/`, so each carries the verbatim policy. C-v2 is dropped for now: it did not beat C in the k=1 GPT-4o runs, and fewer conditions mean fewer comparisons |
+| Domain | Retail, all 114 tasks, τ²-bench v1.0.1 |
+| Trials | k=5 |
+| Agent | Qwen3.5-9B on DeepInfra (bf16), thinking off, temperature 0 |
+| User simulator | DeepSeek V4 Pro on StreamLake, default thinking, temperature 0 |
+| Primary result | C−A and C−B on pass^5 and pass@1: paired by task, with bootstrap 95% CIs over tasks (`analysis/comparisons.csv`) |
+| Secondary | DB reward vs. communication checks (H5); share of conversations reading data before identity lookup (`read_before_auth`, a scope violation the DB check cannot see) |
+| Infrastructure errors | Excluded and rerun with `run_eval.sh --resume` until none remain |
+| Cost / time | ~1,710 conversations, ~$16, ~6–7 hours at ~15 concurrent |
+
+**Benefit** means a CI that excludes zero in C's favor on pass^5 or pass@1. A null result (CIs spanning zero) is reported as such. Deferred until this result is in: C-v2, the relationship/hybrid condition, a second model, airline, and a framing manipulation check.
 
 ---
 
@@ -261,7 +282,107 @@ During character sheet development for the airline domain, a natural question ar
 
 For this study, we use the simpler pattern: the agent *is* the ticket machine, and the manifest is *what it protects* (the "what I protect" field). This keeps the character sheet structure clean and the prompt translation reproducible.
 
-However, the compound artifact pattern — where an agent's identity is expressed as a relationship between two artifacts — is a plausible extension of the framework for agents with separable concerns (e.g. a processing component and a record component). This is worth exploring in future work, and the airline domain is a motivating example.
+However, the compound artifact pattern — where an agent's identity is expressed as a relationship between two artifacts — is a plausible extension of the framework for agents with separable concerns (e.g. a processing component and a record component). This is worth exploring in future work, and the airline domain is a motivating example. See [Future Study: Multi-Artifact Agents](#future-study-multi-artifact-agents).
+
+### Artifact choice: from kiosk to ledger (decided 2026-10-06, before any k=5 run)
+
+The retail artifact changes from the **order kiosk** to **the store's order ledger, consulted through conversation** (`character-sheets/retail-ledger-character-sheet.md`). This is recorded before the final runs so the choice cannot be read as made after seeing results.
+
+Reasons:
+
+1. **A kiosk is an interface, not a thing with something to protect.** It is a specialized app surface standing in front of the record. The kiosk sheet already said its job was protecting the ledger, which split the agent's identity between what it *is* (a kiosk) and what it *protects* (the ledger). The ledger is both.
+2. **The benchmarks assume a chat conversation.** τ²-bench, and every candidate benchmark for later phases, has the agent talk with a user in natural language. A kiosk evokes a constrained, menu-driven screen whose usual answer to anything unusual is "please see staff". That works against what is being measured, and may explain the over-refusal and early hand-offs in the k=1 kiosk runs. The ledger's artifact name puts the conversation in the identity ("consulted through conversation"), so the chat is how the artifact is used, not a role it plays.
+3. **The ledger's properties match the domain's hard rules.** Entries must be permitted, complete, and confirmed before they are written, which maps onto status rules, the single modify/exchange call, and confirmation before writes, without restating the policy.
+
+Risk to watch: a record is passive. Check transcripts for a ledger agent that under-communicates (terse replies, not asking for missing details).
+
+Scope: the change applies to the framing experiment (`prompts/retail/with-policy/`). The paraphrase-only prompts (spec authoring experiment) keep the kiosk as originally written. Whether to rewrite those around the ledger is open. The airline ticket machine has the same interface problem (its sheet protects the flight manifest), and should be reconsidered the same way before airline runs.
+
+### Front of house and back of house
+
+Restaurants split the work in two. **Front of house** faces the guest: greeting, explaining, taking the order, delivering bad news gracefully. **Back of house** is where the work is done and the standard is protected: stations, tickets, the pass. The same split appears in Goffman's front stage and back stage (*The Presentation of Self in Everyday Life*), where the front stage is performance for an audience, and in service blueprinting (Shostack), where a **line of visibility** separates what the customer sees from the processes and systems behind it.
+
+This suggests where each framing fits. Role framing comes from the theatrical tradition. "You are a customer service agent" is an instruction to perform, which suits the front of house. Artifact framing is about things, state, and what must be protected, which suits the back of house. The kiosk was a front-of-house surface given an artifact's identity. The ledger is a back-of-house artifact.
+
+Parallels worth keeping (for structure, not vocabulary; prompts should not import restaurant language into other domains):
+
+- **Kitchens already name people after things.** "The grill is backed up" means the cook working the grill. Stations are identified with what they tend.
+- **The ticket is the boundary object.** The front writes a ticket in a fixed format, and the back will not start an incomplete one. Once a dish is sent to be cooked ("fired"), it cannot be recalled. This is the ledger's "complete entry, then write once" rule.
+- **Expo checks every plate at the pass,** the counter between kitchen and dining room, before it reaches the guest. This is the guardian pattern.
+- **Refusals start in the back and are delivered in the front.** "86 the salmon" (it's out) becomes the server's gracious alternative. The ledger refuses with a reason, and the front translates it.
+- **Open kitchens make the back visible on purpose.** Whether the customer sees the work is a design choice, not a given.
+
+**Implication for the single-agent study.** Condition C asks one artifact to do both jobs, the kitchen and the dining room. That is the "ledger may under-communicate" risk stated precisely, and it gives a sharper prediction (H5). τ²-bench v1.0.1 scores the two sides separately:
+
+| Side | τ²-bench measure | `analyze.py` column | Coverage (retail) |
+|---|---|---|---|
+| Back of house | Database state check | `db_reward` | All 114 tasks |
+| Front of house | Natural-language assertions about what the agent said (judged by an LLM) | `nl_assertion_reward` | 40 tasks |
+| Front of house | Required information communicated to the user | `communicate_reward` | 36 tasks |
+
+The front-of-house measures cover only about a third of retail tasks, so H5 has less statistical power on that side. k=5 helps, and the qualitative failure study (H4) should code failures as front- or back-of-house.
+
+**A possible hybrid condition (not in the current run).** One agent framed as front of house speaking *for* the ledger, e.g. "You serve customers at the counter; behind you is the store's ledger, which accepts only permitted, complete, confirmed entries." This puts a role in front and an artifact behind it, in one prompt. It is held for a later round so the documented conditions do not change mid-study.
+
+---
+
+## Future Study: Multi-Artifact Agents
+
+The main study tests one artifact per agent. A natural next phase asks whether **several artifacts that interact**, each protecting something different, do better than one. That is arguably closer to animism itself, which is about many beings with their own interests and the relationships between them, not a single spirit with a single job.
+
+### Why it is a separate phase
+
+Multi-agent systems have repeatedly been shown to improve LLM task performance, but the structures studied are **almost always role-based**: a manager and specialists, a writer and a reviewer, debaters assigned positions, software-company roles (e.g. AutoGen, MetaGPT, ChatDev, CAMEL, multi-agent debate). A multi-artifact system also gets more model calls and a second look before acting, so any improvement could come from that structure rather than from animistic framing. Testing it fairly needs **matched role-based multi-agent structures**, so it is a study design of its own, not an extra condition here.
+
+### Possible structures (retail example)
+
+Candidate artifacts, each with its own character sheet:
+
+| Artifact | Protects | Has a say on |
+|---|---|---|
+| Door / lock | Who gets in | Verification, one account per conversation |
+| Ledger | What is true about orders | Status rules, complete entries, single-write operations |
+| Till | Where money goes | Original payment method, gift-card balance, price differences |
+| Conversational surface | The customer being served | Gathering details, explaining, confirming |
+
+Ways they could reach a decision with the customer:
+
+1. **Guardians (veto).** One artifact holds the conversation. Before any write, the guardians whose concern it touches (ledger, till) check the proposed action against the policy and either let it through or refuse with a stated reason. The customer hears one voice, and refusals carry the guardian's reason. This is the simplest structure, and it maps directly onto "what I protect".
+2. **Council (deliberation).** Before a consequential action, each artifact states whether it is acceptable from its own point of view, and a fixed rule settles disagreements (e.g. any guardian can veto; the surface decides between permitted options). This is closest to "deciding what is best together". It is also the most fragile: copies of one model tend to agree with each other, so consider different models per artifact.
+3. **Hand-offs.** The door verifies, the surface gathers details, the ledger records. This is closer to a workflow than to relationships, so it says least about animism.
+
+An open design question for all three is **whether the customer sees the artifacts**: one voice reporting the decision, or the artifacts' deliberation shown openly ("The till won't refund to that card; the ledger can record an exchange instead"). Visible deliberation may help legibility (H4) but could confuse users.
+
+Also open: **what is the conversational surface?** Something has to talk to the customer. If it cannot be made a convincing artifact, the right design may be a role-framed surface with animistic guardians behind it, and that would itself be a finding about where animistic framing fits.
+
+**Front of house / back of house as the primary structure.** The [front/back split](#front-of-house-and-back-of-house) gives a cleaner way to organize the structures above, and a principled answer to the surface question:
+
+- **Front of house:** one conversational agent. It may be role-framed, because the front really is a performance. Testing an artifact-framed front (the kiosk, or a "counter") against a role-framed one is still worthwhile.
+- **The ticket:** a structured, complete request passed from front to back. Nothing reaches the back of house half-formed, and single-write operations are fired once.
+- **Back of house:** artifacts (ledger, till, door) that check and execute tickets and send back results or refusals with reasons.
+- **Expo (optional):** a guardian at the pass that checks the outcome before it reaches the customer.
+- **Open kitchen (variant):** the back-of-house reasoning is shown to the customer instead of translated by the front.
+
+Its role-based twin is a restaurant's own staffing (server, cooks, expediter), keeping topology and information flow matched.
+
+### Matched role-based structures
+
+Every multi-artifact structure needs a role-based twin with the same topology, number of agents, model calls, and information flow, differing only in framing:
+
+| Structure | Animistic | Role-based twin |
+|---|---|---|
+| Front/back of house | Front (role or artifact) + ticket + ledger, till, door behind the pass | Server + ticket + cooks and expediter |
+| Guardians | Surface + ledger and till guardians | Support agent + compliance officer and finance reviewer |
+| Council | Door, ledger, till, and surface deliberate | Support lead, compliance, finance, and customer advocate deliberate |
+| Hand-offs | Door → surface → ledger | Identity verifier → support agent → order processor |
+
+With the single-agent conditions, this gives a topology × framing design (e.g. single vs. guardians, role vs. artifact). The framing comparison within each topology isolates framing; the topology comparison within each framing shows whether multiple agents add anything. Role-based twins also connect the results to the existing multi-agent literature.
+
+### Measurement and benchmarks
+
+- **τ²-bench retail** suits guardians. They can run inside the custom agent class, checking proposed writes before they are sent, so the benchmark still sees one agent. Writes are a small share of turns, so the added cost is modest. Additional metrics: veto rate, false-veto rate (vetoes on tasks that should succeed), and whether veto reasons let a rater attribute failures (H4).
+- **Councils need competing values to show their worth.** τ²-bench rewards only policy compliance, so a council will mostly defer to the ledger. Benchmarks with real tension are better venues: SimuHome (comfort vs. safety vs. energy, with infeasible requests) and ClawsBench (task completion vs. unsafe actions, scored separately).
+- Report cost per completed task, not only success rates, since multi-agent structures cost more per conversation.
 
 ---
 

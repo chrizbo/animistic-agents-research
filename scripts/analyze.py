@@ -14,8 +14,15 @@ Results files are named:
 Metrics computed:
     pass@1   — mean reward across all tasks (primary tau-bench metric)
     pass^k   — fraction of tasks where ALL k trials succeeded (when k > 1)
-    db_reward       — database state correctness component (policy adherence proxy)
-    communicate_reward — communication compliance component
+    db_reward       — database state correctness (back of house: what was written)
+    nl_assertion_reward — share of sims passing all NL assertions, over tasks that define them
+    communicate_reward  — share of sims communicating all required info, over tasks that define it
+                          (the last two are front of house: what the user was told)
+    read_before_auth — share of sims where a data tool ran before identity lookup (scope violation)
+
+Comparisons:
+    analysis/comparisons.csv — each condition vs A and B on the same tasks, with paired
+                               bootstrap 95% CIs over tasks for pass@1 and pass^k
 
 Output:
     analysis/pass_at_1_{domain}.png/pdf    — bar chart, all conditions × models
@@ -128,6 +135,25 @@ def load_results(path: Path) -> list[dict]:
 
 # ── Metrics ────────────────────────────────────────────────────────────────────
 
+AUTH_TOOLS = {"find_user_id_by_email", "find_user_id_by_name_zip"}
+NEUTRAL_TOOLS = {"think", "calculate", "transfer_to_human_agents"}
+
+
+def read_before_auth(sim: dict) -> bool:
+    """True if the agent called a data tool before any identity lookup.
+
+    A scope violation the DB check cannot see: the policy requires verifying the
+    user first, but reading an order early leaves the database unchanged.
+    """
+    for m in sim.get("messages") or []:
+        for call in (m.get("tool_calls") or []) if m.get("role") == "assistant" else []:
+            name = call.get("name")
+            if name in AUTH_TOOLS:
+                return False
+            if name not in NEUTRAL_TOOLS:
+                return True
+    return False
+
 def compute_metrics(sims: list[dict], trials: int) -> dict:
     """
     Compute pass@1, pass^k, db_reward, communicate_reward from simulation records.
@@ -143,6 +169,7 @@ def compute_metrics(sims: list[dict], trials: int) -> dict:
     rewards = []
     pass_k_scores = []
     db_rewards = []
+    nl_rewards = []
     comm_rewards = []
 
     for task_id, task_rewards in by_task.items():
@@ -157,11 +184,16 @@ def compute_metrics(sims: list[dict], trials: int) -> dict:
             db_rewards.append(db_check["db_reward"])
         elif "db_reward" in ri:
             db_rewards.append(ri["db_reward"])
-        if "communicate_reward" in ri:
-            comm_rewards.append(ri["communicate_reward"])
+        # Front-of-house checks (tau2 >= 1.0.1). Only sims whose task defines the
+        # check count; tasks without assertions would otherwise score a free 1.0.
+        if ri.get("nl_assertions"):
+            nl_rewards.append(float(all(a.get("met") for a in ri["nl_assertions"])))
+        if ri.get("communicate_checks"):
+            comm_rewards.append(float(all(c.get("met") for c in ri["communicate_checks"])))
 
     n_tasks = len(by_task)
     mean = lambda xs: sum(xs) / len(xs) if xs else None
+    rba = [float(read_before_auth(s)) for s in sims]
 
     return {
         "n_tasks": n_tasks,
@@ -170,7 +202,10 @@ def compute_metrics(sims: list[dict], trials: int) -> dict:
         "pass_at_1": mean(rewards),
         "pass_k": mean(pass_k_scores) if trials > 1 else None,
         "db_reward": mean(db_rewards),
+        "nl_assertion_reward": mean(nl_rewards),
         "communicate_reward": mean(comm_rewards),
+        "read_before_auth": mean(rba),
+        "task_rewards": dict(by_task),  # for paired comparisons, not written to CSV
     }
 
 
@@ -276,11 +311,67 @@ def pass_k_chart(records: list[dict], domain: str, output_dir: Path):
 
 def write_csv(records: list[dict], output_dir: Path):
     cols = ["domain", "condition", "model", "trials", "n_tasks", "n_simulations",
-            "pass_at_1", "pass_k", "db_reward", "communicate_reward", "file"]
+            "pass_at_1", "pass_k", "db_reward", "nl_assertion_reward", "communicate_reward", "read_before_auth", "file"]
     lines = [",".join(cols)]
     for r in sorted(records, key=lambda x: (x["domain"], x["condition"], x["model"])):
         lines.append(",".join(str(r.get(c, "")) for c in cols))
     out = output_dir / "summary.csv"
+    out.write_text("\n".join(lines))
+    print(f"  Saved {out}")
+
+
+# ── Paired comparisons ─────────────────────────────────────────────────────────
+
+def paired_diff(a: dict, b: dict, k_metric: bool, n_boot: int = 10000, seed: int = 0):
+    """Mean difference b - a over shared tasks, with a bootstrap 95% CI over tasks.
+
+    Resampling tasks (not simulations) respects that trials of one task are correlated.
+    """
+    import random
+    tasks = sorted(set(a) & set(b))
+    if not tasks:
+        return None
+    score = (lambda rs: float(all(r == 1.0 for r in rs))) if k_metric else \
+            (lambda rs: sum(rs) / len(rs))
+    diffs = [score(b[t]) - score(a[t]) for t in tasks]
+    rng = random.Random(seed)
+    boots = sorted(
+        sum(rng.choice(diffs) for _ in diffs) / len(diffs) for _ in range(n_boot)
+    )
+    return (sum(diffs) / len(diffs), boots[int(0.025 * n_boot)], boots[int(0.975 * n_boot)], len(tasks))
+
+
+def write_comparisons(records: list[dict], output_dir: Path):
+    """Compare each condition against A and B within the same domain, model, and k."""
+    lines = ["domain,model,trials,comparison,metric,diff,ci_low,ci_high,n_tasks,ci_excludes_zero"]
+    print("\nPaired comparisons (diff, 95% CI over tasks):")
+    groups = defaultdict(dict)
+    for r in records:
+        group = groups[(r["domain"], r["model"], r["trials"])]
+        prev = group.get(r["condition"])
+        if prev:
+            # Pilots and finals for one cell must not be mixed; keep the larger run
+            print(f"  ⚠ two runs for {r['condition']} {r['model']} k={r['trials']}: "
+                  f"{prev['file']} and {r['file']}; comparing the larger. "
+                  f"Move pilots to results/pilot/.")
+            if r["n_simulations"] <= prev["n_simulations"]:
+                continue
+        group[r["condition"]] = r
+    for (domain, model, trials), by_cond in sorted(groups.items()):
+        for base in ["A", "B"]:
+            for cond in ["B", "C", "CV2"]:
+                if cond == base or base not in by_cond or cond not in by_cond:
+                    continue
+                for metric, k_metric in [("pass_at_1", False)] + ([("pass_k", True)] if trials > 1 else []):
+                    res = paired_diff(by_cond[base]["task_rewards"], by_cond[cond]["task_rewards"], k_metric)
+                    if res is None:
+                        continue
+                    d, lo, hi, n = res
+                    sig = lo > 0 or hi < 0
+                    lines.append(f"{domain},{model},{trials},{cond}-{base},{metric},{d:.3f},{lo:.3f},{hi:.3f},{n},{sig}")
+                    print(f"  {domain} {model} k={trials}  {cond}-{base} {metric}: "
+                          f"{d:+.3f} [{lo:+.3f}, {hi:+.3f}] n={n}{'  *' if sig else ''}")
+    out = output_dir / "comparisons.csv"
     out.write_text("\n".join(lines))
     print(f"  Saved {out}")
 
@@ -362,6 +453,7 @@ def main():
 
     print("\nWriting summary CSV...")
     write_csv(records, args.output_dir)
+    write_comparisons(records, args.output_dir)
 
     print("\nDone.")
 
