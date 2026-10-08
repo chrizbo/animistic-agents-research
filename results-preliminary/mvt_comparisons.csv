@@ -1,0 +1,7 @@
+domain,model,trials,comparison,metric,diff,ci_low,ci_high,n_tasks,ci_excludes_zero
+retail,openrouter-qwen-qwen3-5-9b-think-off +policy,5,B-A,pass_at_1,0.012,-0.030,0.056,114,False
+retail,openrouter-qwen-qwen3-5-9b-think-off +policy,5,B-A,pass_k,-0.009,-0.114,0.096,114,False
+retail,openrouter-qwen-qwen3-5-9b-think-off +policy,5,C-A,pass_at_1,0.005,-0.037,0.047,114,False
+retail,openrouter-qwen-qwen3-5-9b-think-off +policy,5,C-A,pass_k,-0.088,-0.193,0.018,114,False
+retail,openrouter-qwen-qwen3-5-9b-think-off +policy,5,C-B,pass_at_1,-0.007,-0.047,0.033,114,False
+retail,openrouter-qwen-qwen3-5-9b-think-off +policy,5,C-B,pass_k,-0.079,-0.175,0.026,114,False

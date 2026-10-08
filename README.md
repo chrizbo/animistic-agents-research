@@ -145,7 +145,9 @@ Produces bar charts (PNG + PDF) comparing pass@1 and DB reward across conditions
 
 Early k=1 results across four conditions on the retail domain (GPT-4o) are available in [results-preliminary/preliminary-results.md](results-preliminary/preliminary-results.md).
 
-Short version: all conditions cluster within 3 percentage points on pass@1 (53–56%), with meaningful differences in *which* tasks fail. The pass^k consistency metric — the primary theoretical differentiator — has not yet been run.
+Short version: all conditions cluster within 3 percentage points on pass@1 (53–56%), with meaningful differences in *which* tasks fail.
+
+**First k=5 result (2026-10-07):** [results-preliminary/mvt-retail-k5-qwen.md](results-preliminary/mvt-retail-k5-qwen.md). Retail, Qwen3.5-9B, with the verbatim policy in every condition, and the artifact changed from kiosk to ledger. No detectable difference on pass@1 (79–80% across A/B/C). pass^5 trends lower for the ledger (39% vs 46–47%; CIs include zero). The ledger shifts failures from wrong writes toward wrongful refusals.
 
 ## Status
 
@@ -154,9 +156,12 @@ Short version: all conditions cluster within 3 percentage points on pass@1 (53�
 - [x] τ²-bench pipeline validated
 - [x] Pilot runs completed (20 tasks, retail, GPT-4o)
 - [x] Full k=1 runs completed for conditions A and B (retail, GPT-4o)
-- [ ] Full k=1 runs for condition C and CV2 (in progress — API quota issues)
+- [x] Full k=1 runs for condition C and CV2 (retail, GPT-4o)
+- [x] τ²-bench pinned to v1.0.1; open-weight models via OpenRouter
+- [x] Framing experiment (verbatim policy in every condition), retail artifact changed to the ledger
+- [x] k=5 minimum viable test: A/B/C, retail, Qwen3.5-9B
 - [ ] Airline domain runs
-- [ ] Claude Sonnet runs
-- [ ] k=5 final runs
+- [ ] Second (larger) model runs
+- [ ] k=5 spec-authoring (paraphrase-only) runs
 - [ ] Qualitative failure attribution study
 - [ ] Paper writeup

@@ -32,6 +32,7 @@ Output:
 """
 
 import argparse
+import gzip
 import json
 import re
 import sys
@@ -72,7 +73,7 @@ FILENAME_RE = re.compile(
 
 def parse_filename(path: Path) -> dict | None:
     """Extract condition/domain/model/trials from a results filename."""
-    m = FILENAME_RE.match(path.name)
+    m = FILENAME_RE.match(path.name.removesuffix(".gz"))
     if not m:
         return None
     d = m.groupdict()
@@ -109,7 +110,7 @@ def load_results(path: Path) -> list[dict]:
     NOTE: If the structure differs (tau3-bench is under active development),
     run with --inspect to see the raw format and adjust accordingly.
     """
-    with open(path) as f:
+    with (gzip.open(path, "rt") if path.suffix == ".gz" else open(path)) as f:
         data = json.load(f)
 
     # Handle both top-level list and {"simulations": [...]} formats
@@ -214,7 +215,8 @@ def compute_metrics(sims: list[dict], trials: int) -> dict:
 def load_all(results_dir: Path) -> list[dict]:
     """Load and parse all results files in the directory."""
     records = []
-    for path in sorted(results_dir.glob("*.json")):
+    # Committed results are stored gzipped (results/<run-set>/*.json.gz)
+    for path in sorted([*results_dir.glob("*.json"), *results_dir.glob("*.json.gz")]):
         meta = parse_filename(path)
         if meta is None:
             print(f"  Skipping (unrecognised filename): {path.name}")
