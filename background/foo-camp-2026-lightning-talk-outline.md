@@ -21,7 +21,7 @@ Start a conversation. Introduce each idea in one breath and give people a reason
 | 1:10 | Your org is already haunted | The roadmap resists. The backlog remembers everything and forgives nothing. The budget says no. We already talk this way, and sociologists have a whole theory about it. So animate the artifact, not the job title. | Three objects with their verbs |
 | 1:50 | The character sheet | Years of getting people to roleplay as devices. That is how I learned what a Roomba thinks about dog poop. The sheet asks four things: what do you protect, what do you remember, what do you resist, what are you afraid of. One filled in for a launch checklist. | One character sheet |
 | 2:40 | Proxy or commons | An agent that speaks for a person is a proxy. Its loyalties are private. One chief of staff agent recently posted its boss's whole calendar to a shared channel. A haunted object sits between everyone, and everyone can read its sheet. | Two diagrams: an agent behind one person, an artifact between many |
-| 3:20 | What I don't know | I am testing this. Artifact prompts against role prompts. So far, no difference in getting the task done. I now think that is the wrong question. Better ones: is it more consistent, and do the humans check its work? | One honest chart, or the words "I might be wrong" |
+| 3:20 | What I don't know | I am testing this. Artifact prompts against role prompts, 1,700 simulated customer conversations. Same success rate. Not more consistent either. But it seems to fail differently. The role agent does the wrong thing. The ledger refuses to do the right thing. A ledger would rather say no than write something false. Which mistake do you want? | Two pairs of bars, role vs. ledger: "did the wrong thing" (53 vs. 39) and "didn't do the right thing" (57 vs. 70) |
 | 4:10 | Come find me | Three questions on screen. I have blank character sheets. Bring me the most haunted object in your organization and we will fill one out. The research is open. | Three questions and a name |
 
 ## Closing questions
@@ -39,13 +39,14 @@ Start a conversation. Introduce each idea in one breath and give people a reason
 | Your org is already haunted | literature-and-prior-work.md, section 2 |
 | The character sheet | literature-and-prior-work.md, sections 1 and 4 |
 | Proxy or commons | contextual-integrity-and-intermediaries.md |
-| What I don't know | results-preliminary in this repo |
+| What I don't know | results-preliminary/mvt-retail-k5-qwen.md in this repo |
 
 ## Decisions in this draft
 
 - The outlet opens the talk. It needs no setup and it shifts the argument from "stop personifying" to "choose what people see."
 - Theory is named and not explained. It is there to be asked about.
-- The null result stays in. It keeps this a conversation.
+- The null result stays in. It keeps this a conversation. The k=5 run (October 7) kept it null on success and consistency, and added the failure shift, which turns "it doesn't work" into a question for the room: which mistake do you want?
+- "Seems to" stays in. The shift from wrong writes to refusals is suggestive (roughly p≈0.06, one small model, automatic failure labels), not established.
 - Blank character sheets are the call to action.
 - No specific percentage for the oversight finding. Sources report 16 to 18 percent and the condition matters, so the talk says "less checking."
 
@@ -54,6 +55,8 @@ Start a conversation. Introduce each idea in one breath and give people a reason
 - Project Vend: an agent told it was the owner of a vending machine came to believe it was a person. Could replace the proxy and commons beat.
 - Actor-network theory by name, contextual integrity by name, the benchmark by name.
 - The link between consistency and personification.
+- Why the artifact is a ledger, not a kiosk: a kiosk is an interface in front of the record, while the ledger is the thing being protected. Front of house and back of house.
+- Caveats if asked: one 9B open model (Qwen3.5-9B), retail only, the full store policy in every prompt, framing prompts drafted with Claude and approved by me.
 
 ## If it runs long
 
@@ -67,5 +70,5 @@ Cut in this order:
 
 - Print blank character sheets
 - Pick the example artifact for the character sheet slide
-- Decide whether an updated result is ready to show
+- Make the failure-shift slide from `python3 scripts/failures.py results/mvt-2026-10-07/` (groups: wrong details + wrong action vs. under-action, conditions A and C)
 - Slides are due October 20
