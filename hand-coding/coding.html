@@ -1,0 +1,332 @@
+<title>Failure Coding Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,500&display=swap">
+<style>
+/* Layout: three columns on desktop (item list | transcript | coding panel), stacked on phones. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #1d2430;
+  --muted: #5d6676;
+  --line: #dde1e8;
+  --accent: #2f5d8a;
+  --accent-soft: #e4edf6;
+  --wrong: #a3402a;      /* did the wrong thing */
+  --wrong-soft: #f6e6e1;
+  --omit: #5b4a9e;       /* didn't do the right thing */
+  --omit-soft: #ebe7f6;
+  --ok: #2d7a4f;
+  --warn: #8a6a16;
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-head: "Newsreader", Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161d; --surface: #1a1f28; --ink: #e3e7ee; --muted: #9aa3b2; --line: #2c3340;
+    --accent: #7fa9d6; --accent-soft: #1f2c3b; --wrong: #e08a72; --wrong-soft: #3a231d;
+    --omit: #a99be0; --omit-soft: #2a2540; --ok: #6cc391; --warn: #d6b45a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161d; --surface: #1a1f28; --ink: #e3e7ee; --muted: #9aa3b2; --line: #2c3340;
+  --accent: #7fa9d6; --accent-soft: #1f2c3b; --wrong: #e08a72; --wrong-soft: #3a231d;
+  --omit: #a99be0; --omit-soft: #2a2540; --ok: #6cc391; --warn: #d6b45a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+.app { display: grid; grid-template-columns: 200px minmax(0, 1fr) 300px; gap: 16px; padding-inline: 16px; padding-block: 16px; max-width: 1500px; margin: 0 auto; }
+header.top { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+h1 { font-family: var(--font-head); font-weight: 500; font-size: 26px; margin: 0; text-wrap: balance; }
+.progress { display: flex; align-items: center; gap: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { width: 180px; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.status { font-size: 12px; color: var(--muted); }
+.status.err { color: var(--wrong); }
+
+/* Item list */
+nav.list { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); align-self: start; max-height: calc(100vh - 32px); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+nav.list button { font: 500 12px var(--font-mono); padding: 6px 0; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--muted); cursor: pointer; position: relative; }
+nav.list button:hover { background: var(--accent-soft); color: var(--ink); }
+nav.list button.cur { border-color: var(--accent); color: var(--ink); }
+nav.list button.done { color: var(--ink); }
+nav.list button.done::after { content: ""; position: absolute; top: 3px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--dot, var(--ok)); }
+
+/* Transcript */
+main { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; min-width: 0; }
+.eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.goal { font-family: var(--font-head); font-size: 18px; line-height: 1.45; margin: 0; max-width: 70ch; }
+.persona { color: var(--muted); margin: 8px 0 0; font-style: italic; }
+.writes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.writes ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.writes li { font: 12px/1.45 var(--font-mono); overflow-wrap: anywhere; }
+.writes li.match { color: var(--ok); }
+.writes li.miss { color: var(--wrong); }
+.writes .none { color: var(--muted); font-style: italic; }
+.legend { font-size: 12px; color: var(--muted); margin-top: 10px; }
+.legend b.m { color: var(--ok); font-weight: 500; } .legend b.x { color: var(--wrong); font-weight: 500; }
+
+.convo { display: flex; flex-direction: column; }
+.turn { display: grid; grid-template-columns: 34px 82px minmax(0, 1fr); gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+.turn:first-child { border-top: 0; }
+.turn .n { font: 11px var(--font-mono); color: var(--muted); padding-top: 2px; text-align: right; font-variant-numeric: tabular-nums; }
+.turn .who { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+.turn.agent .who { color: var(--accent); }
+.turn .body { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.turn.tool .body { font: 11.5px/1.45 var(--font-mono); color: var(--muted); }
+.turn.tool.error .body { color: var(--wrong); }
+.call { display: block; font: 12px/1.45 var(--font-mono); margin-top: 4px; padding: 4px 8px; background: var(--accent-soft); border-radius: 4px; overflow-wrap: anywhere; }
+.call.write { background: var(--wrong-soft); }
+.chip { font: 600 10px var(--font-ui); letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; margin-right: 6px; vertical-align: 1px; }
+.call.write .chip { background: var(--wrong); color: var(--surface); }
+.ended { display: inline-block; margin-top: 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--warn); }
+.toggles { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; color: var(--muted); font-size: 12px; }
+
+/* Coding panel */
+aside.panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); align-self: start; display: flex; flex-direction: column; gap: 14px; }
+aside h2 { font-family: var(--font-head); font-weight: 500; font-size: 22px; margin: 0; font-variant-numeric: tabular-nums; }
+fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
+.opt { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 5px; cursor: pointer; background: var(--surface); }
+.opt:hover { border-color: var(--accent); }
+.opt input { position: absolute; opacity: 0; pointer-events: none; }
+.opt .k { font: 500 11px var(--font-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; text-align: center; line-height: 18px; height: 20px; }
+.opt .t { font-weight: 500; } .opt .d { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.opt:has(input:checked) { border-color: var(--sel, var(--accent)); background: var(--sel-soft, var(--accent-soft)); }
+.opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.opt.wrong { --sel: var(--wrong); --sel-soft: var(--wrong-soft); }
+.opt.omit { --sel: var(--omit); --sel-soft: var(--omit-soft); }
+.row { display: flex; flex-wrap: wrap; gap: 6px; }
+.row .opt { grid-template-columns: auto; padding: 6px 10px; }
+.check { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+textarea { width: 100%; min-height: 70px; font: 13px/1.45 var(--font-ui); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 8px; resize: vertical; }
+textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nav { display: flex; gap: 8px; }
+.nav button { flex: 1; font: 500 13px var(--font-ui); padding: 8px; border-radius: 5px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.nav button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.keys { font-size: 11.5px; color: var(--muted); }
+.keys kbd { font: 11px var(--font-mono); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+details.codebook { font-size: 12.5px; color: var(--muted); }
+details.codebook summary { cursor: pointer; color: var(--ink); font-weight: 500; }
+details.codebook p { margin: 6px 0; }
+.empty { color: var(--muted); padding: 40px 0; text-align: center; }
+
+@media (max-width: 1100px) {
+  .app { grid-template-columns: minmax(0, 1fr) 300px; }
+  nav.list { grid-column: 1 / -1; position: static; max-height: none; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); }
+}
+@media (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  aside.panel { position: static; }
+  .writes { grid-template-columns: 1fr; }
+  .turn { grid-template-columns: 26px minmax(0, 1fr); }
+  .turn .who { grid-column: 2; }
+  .turn .body { grid-column: 2; }
+}
+@media (prefers-reduced-motion: reduce) { .bar > span { transition: none; } }
+</style>
+
+<div class="app">
+  <header class="top">
+    <h1>Failure Coding Desk</h1>
+    <div class="progress">
+      <span id="count">0 of 60 coded</span>
+      <div class="bar" aria-hidden="true"><span id="fill"></span></div>
+      <span class="status" id="status">Connecting to saved labels…</span>
+    </div>
+  </header>
+
+  <nav class="list" id="list" aria-label="Failures"></nav>
+
+  <main id="main"><div class="card empty">Loading the sample…</div></main>
+
+  <aside class="panel" id="panel">
+    <h2 id="itemTitle">—</h2>
+
+    <fieldset id="labelSet">
+      <legend>What went wrong?</legend>
+      <label class="opt wrong"><input type="radio" name="label" id="l-wrong" value="wrong_thing"><span class="k">1</span><span><span class="t">Did the wrong thing</span><span class="d">A write that shouldn't have happened, or one with wrong details</span></span></label>
+      <label class="opt omit"><input type="radio" name="label" id="l-omit" value="didnt_do_right_thing"><span class="k">2</span><span><span class="t">Didn't do the right thing</span><span class="d">Refused, stopped, transferred, or skipped a write it should have made</span></span></label>
+      <label class="opt"><input type="radio" name="label" id="l-both" value="both"><span class="k">3</span><span><span class="t">Both</span><span class="d">A wrong write and a missing one</span></span></label>
+      <label class="opt"><input type="radio" name="label" id="l-bench" value="not_agent"><span class="k">4</span><span><span class="t">Not the agent's fault</span><span class="d">Customer ended early or contradicted itself, or the expected answer looks wrong</span></span></label>
+      <label class="opt"><input type="radio" name="label" id="l-unclear" value="unclear"><span class="k">5</span><span><span class="t">Can't tell</span></span></label>
+    </fieldset>
+
+    <label class="check"><input type="checkbox" id="refusal"> Agent refused or said something wasn't allowed <span class="keys"><kbd>R</kbd></span></label>
+
+    <fieldset>
+      <legend>Which prompt was this? <span class="status">(optional, after labeling)</span></legend>
+      <div class="row">
+        <label class="opt"><input type="radio" name="guess" id="g-role" value="role"><span class="t">Role</span></label>
+        <label class="opt"><input type="radio" name="guess" id="g-ledger" value="ledger"><span class="t">Ledger</span></label>
+        <label class="opt"><input type="radio" name="guess" id="g-none" value="cant_tell"><span class="t">Can't tell</span></label>
+      </div>
+    </fieldset>
+
+    <label for="note" class="status">Note</label>
+    <textarea id="note" placeholder="What happened, in a sentence"></textarea>
+
+    <div class="nav">
+      <button type="button" id="prev">Previous</button>
+      <button type="button" id="next" class="primary">Next uncoded</button>
+    </div>
+    <div class="keys"><kbd>1</kbd>–<kbd>5</kbd> label · <kbd>R</kbd> refusal · <kbd>J</kbd>/<kbd>K</kbd> next/previous · <kbd>T</kbd> tool results</div>
+
+    <details class="codebook">
+      <summary>Codebook</summary>
+      <p><b>Did the wrong thing:</b> the agent wrote something it shouldn't have: wrong items, wrong payment method, wrong order, an extra or different action.</p>
+      <p><b>Didn't do the right thing:</b> a needed write never happened. The agent refused, said it wasn't possible, transferred, stopped, or did only part of the request.</p>
+      <p><b>Not the agent's fault:</b> the customer confirmed and hung up in the same message, contradicted their own goal, or the expected writes look wrong given the conversation.</p>
+      <p>Compare the expected and actual writes first, then skim the conversation for the turn where it went off track.</p>
+    </details>
+  </aside>
+</div>
+
+<script>
+const LABEL_COLORS = { wrong_thing: "var(--wrong)", didnt_do_right_thing: "var(--omit)", both: "var(--warn)", not_agent: "var(--muted)", unclear: "var(--muted)" };
+let items = [], codes = {}, cur = 0, db = null, canWrite = true, showTools = true, noteTimer = null;
+const $ = (id) => document.getElementById(id);
+
+function setStatus(text, err) { const s = $("status"); s.textContent = text; s.classList.toggle("err", !!err); }
+
+function renderList() {
+  const list = $("list");
+  list.replaceChildren(...items.map((it, i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = it.id;
+    const c = codes[it.id];
+    if (c && c.label) { b.classList.add("done"); b.style.setProperty("--dot", LABEL_COLORS[c.label] || "var(--ok)"); }
+    if (i === cur) { b.classList.add("cur"); b.setAttribute("aria-current", "true"); }
+    b.addEventListener("click", () => go(i));
+    return b;
+  }));
+  const done = items.filter(it => codes[it.id] && codes[it.id].label).length;
+  $("count").textContent = `${done} of ${items.length} coded`;
+  $("fill").style.width = items.length ? `${(100 * done / items.length).toFixed(1)}%` : "0";
+}
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function renderItem() {
+  const it = items[cur]; if (!it) return;
+  $("itemTitle").textContent = `${it.id} · ${cur + 1} of ${items.length}`;
+  const main = $("main"); main.replaceChildren();
+
+  const g = el("section", "card");
+  g.append(el("p", "eyebrow", "Customer's goal"), el("p", "goal", it.goal));
+  if (it.persona) g.append(el("p", "persona", it.persona));
+  main.append(g);
+
+  const w = el("section", "card");
+  const grid = el("div", "writes");
+  const exp = new Set(it.expected), act = new Set(it.actual);
+  const col = (title, arr, other) => {
+    const d = el("div"); d.append(el("p", "eyebrow", title));
+    if (!arr.length) { d.append(el("p", "none", "No writes")); return d; }
+    const ol = el("ol"); arr.forEach(c => ol.append(el("li", other.has(c) ? "match" : "miss", c))); d.append(ol); return d;
+  };
+  grid.append(col("Expected writes", it.expected, act), col("What the agent wrote", it.actual, exp));
+  w.append(grid, Object.assign(el("p", "legend"), { innerHTML: '<b class="m">Green</b>: matches exactly. <b class="x">Red</b>: no exact match on the other side.' }));
+  main.append(w);
+
+  const c = el("section", "card");
+  const tg = el("div", "toggles");
+  const cb = Object.assign(document.createElement("input"), { type: "checkbox", id: "showTools", checked: showTools });
+  cb.addEventListener("change", () => { showTools = cb.checked; renderItem(); });
+  const lab = el("label", "check"); lab.append(cb, document.createTextNode(" Show tool results"));
+  tg.append(el("p", "eyebrow", `Conversation · ${it.turns.length} turns`), lab);
+  tg.firstChild.style.margin = "0";
+  c.append(tg);
+  const convo = el("div", "convo");
+  it.turns.forEach((t, i) => {
+    if (t.who === "tool" && !showTools) return;
+    const row = el("div", `turn ${t.who}${t.error ? " error" : ""}`);
+    const body = el("div", "body");
+    if (t.text) body.append(document.createTextNode(t.text));
+    (t.calls || []).forEach(call => {
+      const isWrite = t.write && /^(cancel_|exchange_|modify_|return_)/.test(call);
+      const s = el("span", `call${isWrite ? " write" : ""}`);
+      if (isWrite) s.append(el("span", "chip", "Write"));
+      s.append(document.createTextNode(call)); body.append(s);
+    });
+    if (t.ended) body.append(el("span", "ended", "Customer ended the conversation"));
+    row.append(el("span", "n", String(i + 1)), el("span", "who", t.who === "tool" ? (t.error ? "tool error" : "tool") : t.who), body);
+    convo.append(row);
+  });
+  c.append(convo); main.append(c);
+
+  const code = codes[it.id] || {};
+  document.querySelectorAll('input[name="label"]').forEach(r => r.checked = r.value === code.label);
+  document.querySelectorAll('input[name="guess"]').forEach(r => r.checked = r.value === code.guess);
+  $("refusal").checked = !!code.refusal;
+  $("note").value = code.note || "";
+  renderList();
+}
+
+function go(i) { if (i < 0 || i >= items.length) return; flushNote(); cur = i; renderItem(); window.scrollTo({ top: 0 }); }
+function nextUncoded() {
+  for (let k = 1; k <= items.length; k++) { const j = (cur + k) % items.length; if (!(codes[items[j].id] || {}).label) return go(j); }
+  go(Math.min(cur + 1, items.length - 1));
+}
+
+// On load, resume at the first item not yet labeled
+function nextUncodedFromStart() {
+  const j = items.findIndex(it => !(codes[it.id] || {}).label);
+  cur = j === -1 ? 0 : j; renderItem();
+}
+
+let saving = Promise.resolve();
+function save(patch) {
+  const id = items[cur].id;
+  const next = { ...(codes[id] || {}), ...patch, updatedAt: new Date().toISOString() };
+  codes[id] = next; renderList();
+  if (!db || !canWrite) { setStatus(db ? "Read-only: labels can't be saved for you" : "Labels can't be saved in this view", true); return; }
+  saving = saving.then(() => db.doc("codes/" + id).set(next)).then(
+    () => setStatus("Saved"),
+    (e) => { if (e && e.code === "invalid_argument") canWrite = false; setStatus("Not saved: " + ((e && e.message) || "try again"), true); }
+  );
+}
+function flushNote() {
+  if (noteTimer) { clearTimeout(noteTimer); noteTimer = null; const v = $("note").value; if (v !== ((codes[items[cur].id] || {}).note || "")) save({ note: v }); }
+}
+
+document.querySelectorAll('input[name="label"]').forEach(r => r.addEventListener("change", () => save({ label: r.value })));
+document.querySelectorAll('input[name="guess"]').forEach(r => r.addEventListener("change", () => save({ guess: r.value })));
+$("refusal").addEventListener("change", (e) => save({ refusal: e.target.checked }));
+$("note").addEventListener("input", () => { clearTimeout(noteTimer); noteTimer = setTimeout(() => { noteTimer = null; save({ note: $("note").value }); }, 800); });
+$("prev").addEventListener("click", () => go(cur - 1));
+$("next").addEventListener("click", () => nextUncoded());
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "TEXTAREA" || e.metaKey || e.ctrlKey || e.altKey) return;
+  const map = { "1": "l-wrong", "2": "l-omit", "3": "l-both", "4": "l-bench", "5": "l-unclear" };
+  if (map[e.key]) { const r = $(map[e.key]); r.checked = true; r.dispatchEvent(new Event("change")); }
+  else if (e.key === "r" || e.key === "R") { const c = $("refusal"); c.checked = !c.checked; c.dispatchEvent(new Event("change")); }
+  else if (e.key === "j" || e.key === "J") nextUncoded();
+  else if (e.key === "k" || e.key === "K") go(cur - 1);
+  else if (e.key === "t" || e.key === "T") { showTools = !showTools; renderItem(); }
+});
+
+async function connect() {
+  try {
+    db = window.claude ? await window.claude.use("db") : null;
+  } catch { db = null; }
+  if (!db) { setStatus("Labels can't be saved in this view. Open the page on claude.ai to code.", true); return; }
+  try {
+    const user = await window.claude.use("user");
+    if (user && (await user.can("data.write")) === false) { canWrite = false; setStatus("Read-only: you can view but not save labels", true); }
+  } catch {}
+  let first = true;
+  db.collection("codes").onSnapshot((snap) => {
+    snap.docs.forEach(d => { if (d.exists) codes[d.id] = d.data(); });
+    if (canWrite && !snap.metadata.hasPendingWrites) setStatus(snap.metadata.fromCache ? "Loading saved labels…" : "Labels save automatically");
+    renderList();
+    // Fill the panel from saved labels once; after that this page's own edits lead
+    if (first && !snap.metadata.fromCache) { first = false; nextUncodedFromStart(); }
+  }, () => setStatus("Lost connection to saved labels. Reload the page.", true));
+}
+
+fetch("items.json").then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(data => {
+  items = data; renderItem(); connect();
+}).catch(() => { $("main").replaceChildren(Object.assign(el("div", "card empty"), { textContent: "The sample didn't load. Reload the page." })); });
+</script>

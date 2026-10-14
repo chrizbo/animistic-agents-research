@@ -1,0 +1,61 @@
+id,condition,task_id,trial,auto_label
+F01,A,30,3,wrong action: different write tools
+F02,A,0,1,"under-action: no write, stopped short"
+F03,C,9,3,"under-action: no write, stopped short"
+F04,C,29,4,wrong action: different write tools
+F05,A,46,0,"under-action: no write, stopped short"
+F06,A,41,3,under-action: fewer writes than expected
+F07,A,49,3,wrong details: new_item_ids
+F08,A,39,1,"under-action: no write, stopped short"
+F09,C,32,4,under-action: fewer writes than expected
+F10,C,100,2,wrong action: extra writes
+F11,A,110,3,under-action: fewer writes than expected
+F12,A,60,0,wrong details: payment_method_id
+F13,A,2,4,"communication: DB right, NL assertion failed"
+F14,A,111,2,under-action: fewer writes than expected
+F15,A,69,4,"under-action: no write, stopped short"
+F16,A,38,0,wrong details: reason
+F17,A,37,1,wrong action: extra writes
+F18,C,0,2,"under-action: no write, stopped short"
+F19,A,49,4,wrong details: new_item_ids
+F20,C,93,2,"wrong details: item_ids,order_id"
+F21,A,61,0,"wrong details: new_item_ids,payment_method_id"
+F22,C,32,2,under-action: fewer writes than expected
+F23,C,54,1,under-action: fewer writes than expected
+F24,C,108,2,"under-action: no write, stopped short"
+F25,A,18,4,wrong action: different write tools
+F26,C,59,3,wrong details: order_id
+F27,A,61,2,wrong details: payment_method_id
+F28,C,37,1,"communication: DB right, NL assertion failed"
+F29,C,1,1,"under-action: no write, stopped short"
+F30,C,8,1,"under-action: no write, stopped short"
+F31,C,14,2,"wrong details: item_ids,order_id,payment_method_id"
+F32,A,42,4,under-action: fewer writes than expected
+F33,A,45,3,wrong action: different write tools
+F34,C,0,3,"under-action: no write, stopped short"
+F35,C,1,4,"under-action: no write, stopped short"
+F36,A,60,4,"under-action: no write, stopped short"
+F37,A,46,2,"under-action: no write, transferred"
+F38,C,23,1,"under-action: no write, stopped short"
+F39,C,100,4,wrong action: extra writes
+F40,C,64,3,under-action: fewer writes than expected
+F41,C,36,0,wrong action: extra writes
+F42,C,103,2,"wrong details: item_ids,new_item_ids,order_id"
+F43,A,104,4,"wrong details: item_ids,order_id"
+F44,C,41,4,under-action: fewer writes than expected
+F45,A,69,0,"under-action: no write, transferred"
+F46,C,111,4,under-action: fewer writes than expected
+F47,A,109,0,under-action: fewer writes than expected
+F48,C,77,3,"under-action: no write, stopped short"
+F49,C,41,1,under-action: fewer writes than expected
+F50,A,80,1,"under-action: no write, stopped short"
+F51,A,5,4,wrong action: different write tools
+F52,A,41,1,under-action: fewer writes than expected
+F53,C,80,2,"under-action: no write, stopped short"
+F54,A,38,2,wrong details: reason
+F55,C,49,3,wrong details: new_item_ids
+F56,A,46,3,"communication: DB right, NL assertion failed"
+F57,A,21,0,"wrong details: item_ids,new_item_ids"
+F58,C,27,4,wrong action: extra writes
+F59,C,59,4,under-action: fewer writes than expected
+F60,C,92,4,under-action: fewer writes than expected
